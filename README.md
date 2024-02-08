@@ -258,7 +258,7 @@ systemctl restart haproxy
       ```
       ls -l /var/run/docker.sock
       ```
-      It should show the owner as __'root'__ and the group as __'docker'__. (If the group is root, then we need to execute the below command):
+      > It should show the owner as __'root'__ and the group as __'docker'__. (If the group is root, then we need to execute the below command):
       - __Change__ group ownership :
       ```
       sudo chown root:docker /var/run/docker.sock
