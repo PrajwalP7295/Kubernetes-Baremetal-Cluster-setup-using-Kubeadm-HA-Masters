@@ -25,18 +25,46 @@ For a baremetal kubernetes cluster :
 - __Host machine__ has atleast __8 cores__ and __8GB memory__.
 - __Full network connectivity__ between all machines in the cluster (public or private network is fine).
 - __Unique hostname, MAC address, and product_uuid__ for every node :-
-  - You can get the __MAC address__ of the network interfaces using the command : ```ip link``` or ```ifconfig -a```
+  - You can get the __MAC address__ of the network interfaces using the command : 
+  ```
+  ip link
+  ``` 
+  or 
+  ```
+  ifconfig -a
+  ```
 
-  - To check the __product_uuid__ : ```cat /sys/class/dmi/id/product_uuid```
+  - To check the __product_uuid__ : 
+  ```
+  cat /sys/class/dmi/id/product_uuid
+  ```
   - Kubernetes uses these values to uniquely identify the nodes in the cluster. If these values are not unique to each node, the installation process may fail.
 - Set __UTC__ or same timezone with same time on all nodes :-
-  - Check timezone : ```timedatectl```
-  - List timezones : ```timedatectl list-timezones```
-  - Set the timezone : ```timedatectl set-timezone UTC``` (or timezone of your preference)
-  - Restart __chronyd__ service : ```systemctl restart chronyd```
+  - Check timezone : 
+  ```
+  timedatectl
+  ```
+  - List timezones : 
+  ```
+  timedatectl list-timezones
+  ```
+  - Set the timezone (UTC or timezone of your preference) : 
+  ```
+  timedatectl set-timezone UTC
+  ``` 
+  - Restart __chronyd__ service : 
+  ```
+  systemctl restart chronyd
+  ```
   - If the time is not synced on all nodes run the below commands :-
-    - Disable NTP time sync : ```systemctl disable --now chronyd```
-    - Set time manually : ```timedatectl set-time HH:MM:SS```
+    - Disable NTP time sync : 
+    ```
+    systemctl disable --now chronyd
+    ```
+    - Set time manually : 
+    ```
+    timedatectl set-time HH:MM:SS
+    ```
   - If the time on all nodes is not synced, it may lead to __pod scheduling problems, certificate validity issues, desynchronization of cluster-wide operations__, etc. 
 - Certain ports are open on your machines (excluding load balancer):-
   - __Control Plane(s)__ :
@@ -77,9 +105,21 @@ For a baremetal kubernetes cluster :
   firewall-cmd --reload
   ```
     
-  - You can use tools like __netcat__ to check if a port is open. For example : ```nc 127.0.0.1 6443```
+  - You can use tools like __netcat__ to check if a port is open. For example : 
+  ```
+  nc 127.0.0.1 6443
+  ```
 
   - The above mentioned ports can be opened specifically if the machines are in a public VPC to keep the cluster secure. If the nodes/machines are operating in a private VPC then you can shutdown the firewall service instead of opening each port.
-    - Check firewall status : ```firewall-cmd --state```
-    - Stop firewall : ```systemctl stop firewalld```
-    - Turn off firewall service across reboots : ```systemctl disable firewalld```
+    - Check firewall status : 
+    ```
+    firewall-cmd --state
+    ```
+    - Stop firewall : 
+    ```
+    systemctl stop firewalld
+    ```
+    - Turn off firewall service across reboots : 
+    ```
+    systemctl disable firewalld
+    ```
