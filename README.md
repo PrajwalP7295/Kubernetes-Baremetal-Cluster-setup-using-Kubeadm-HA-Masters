@@ -324,7 +324,9 @@ systemctl restart haproxy
         wget https://link_to_cni_plugin_version.tgz
         ```
         For example, here I used "cni-plugins-linux-amd64-v1.4.0" :
+        
         ```wget https://github.com/containernetworking/plugins/releases/download/v1.4.0/cni-plugins-linux-amd64-v1.4.0.tgz```
+        
       - Extract it under __/opt/cni/bin__:
         ```
         mkdir -p /opt/cni/bin
