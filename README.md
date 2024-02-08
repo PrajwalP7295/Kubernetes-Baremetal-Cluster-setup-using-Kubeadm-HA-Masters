@@ -9,20 +9,20 @@ This documentation guides you in setting up a cluster with __3 Master__ nodes, _
 |Role|FQDN|IP|OS|RAM|CPU|
 |----|----|----|----|----|----|
 |Load Balancer|haproxy-lb.example.com|192.168.10.7|CentOS Linux 7|1G|1|
-|Master|k8s-master-1.example.com|192.168.10.1|CentOS Linux 7|8G|2|
+|Master|k8s-master-1.example.com|192.168.10.1|CentOS Linux 7|16G|2|
 |Master|k8s-master-2.example.com|192.168.10.2|CentOS Linux 7|8G|2|
 |Master|k8s-master-3.example.com|192.168.10.3|CentOS Linux 7|8G|2|
 |Worker|k8s-worker-1.example.com|192.168.10.4|CentOS Linux 7|8G|2|
 |Worker|k8s-worker-2.example.com|192.168.10.5|CentOS Linux 7|8G|2|
 |Worker|k8s-worker-3.example.com|192.168.10.6|CentOS Linux 7|8G|2|
 
-> * Perform all the commands as root user unless otherwise specified
+> * Perform all the commands as __root__ user unless otherwise specified
 
 ## Pre-requisites
 For a baremetal kubernetes cluster :
 - A compatible Linux host. The official k8s site provides generic instructions for Linux distributions based on __Debian__ and __Red Hat__ (CentOS/RHEL), and those distributions without a package manager.
 - __2 GB__ or more of __RAM__ and __2 CPUs__ or more per machine. (except load balancer)
-- __Host machine__ has atleast __8 cores__ and __8GB memory__.
+- __Host machine__ has atleast __2 cores__ and __16GB memory__ in this use case. Each machine has __50 GB storage__.
 - __Full network connectivity__ between all machines in the cluster (public or private network is fine).
 - __Unique hostname, MAC address, and product_uuid__ for every node :-
   - You can get the __MAC address__ of the network interfaces using the command : 
@@ -39,7 +39,7 @@ For a baremetal kubernetes cluster :
   cat /sys/class/dmi/id/product_uuid
   ```
   - Kubernetes uses these values to uniquely identify the nodes in the cluster. If these values are not unique to each node, the installation process may fail.
-- Set __UTC__ or same timezone with same time on all nodes :-
+- Set __UTC__ (or preferred timezone) with same time on all nodes :-
   - Check timezone : 
   ```
   timedatectl
@@ -66,7 +66,7 @@ For a baremetal kubernetes cluster :
     timedatectl set-time HH:MM:SS
     ```
   - If the time on all nodes is not synced, it may lead to __pod scheduling problems, certificate validity issues, desynchronization of cluster-wide operations__, etc. 
-- Certain ports are open on your machines (excluding load balancer):-
+- Certain ports need to be open on your machines :-
   - __Control Plane(s)__ :
     |Protocol|Direction|Port Range|Purpose|Used By|
     |----|----|----|----|----|
@@ -111,11 +111,11 @@ For a baremetal kubernetes cluster :
   ```
 
   - The above mentioned ports can be opened specifically if the machines are in a public VPC to keep the cluster secure. If the nodes/machines are operating in a private VPC then you can shutdown the firewall service instead of opening each port.
-    - Check firewall status : 
+    - Check firewall __status__ : 
     ```
     firewall-cmd --state
     ```
-    - Stop firewall : 
+    - __Stop__ firewall : 
     ```
     systemctl stop firewalld
     ```
@@ -123,3 +123,62 @@ For a baremetal kubernetes cluster :
     ```
     systemctl disable firewalld
     ```
+- Set __hostnames__ of each node :-
+  ```
+  hostnamectl set-hostname '<node_hostname>'
+  ```
+  For example : ```hostnamectl set-hostname '<k8s-master-1>'```
+
+  Start new shell session / reflect changes :
+  ```
+  bash
+  ``` 
+- Configure __/etc/hosts__ file :
+  > - To manage local DNS resolution and allow the nodes in the cluster to communicate with each other using hostnames.
+  ```
+  nano /etc/hosts
+  ```
+  - Make changes as per your __IPs__ and __hostnames__, and add the below lines in the __hosts__ file of each node : 
+  ```
+  192.168.10.1 k8s-master-1
+  192.168.10.2 k8s-master-2
+  192.168.10.3 k8s-master-3
+  192.168.10.4 k8s-worker-1
+  192.168.10.5 k8s-worker-2
+  192.168.10.6 k8s-worker-3
+  192.168.10.7 haproxy-lb
+  ```
+
+## Set up the Load Balancer node
+- __Update packages__ : 
+```
+yum update
+```
+-  __Install Haproxy__ : 
+```
+yum install -y haproxy
+```
+- __Configure__ Haproxy :
+```
+nano /etc/haproxy/haproxy.cfg
+```
+Append the below lines to **/etc/haproxy/haproxy.cfg** - 
+```
+frontend kubernetes-frontend
+    bind 192.168.10.7:6443            <!--lb_node_ip:6443-->
+    mode tcp
+    option tcplog
+    default_backend kubernetes-backend
+
+backend kubernetes-backend
+    mode tcp
+    option tcp-check
+    balance roundrobin
+    server k8s-master-1 192.168.10.1:6443 check fall 3 rise 2      <!--server master_node_hostname master_node_ip:6443 check fall 3 rise 2-->
+    server k8s-master-2 192.168.10.2:6443 check fall 3 rise 2
+    server k8s-master-3 192.168.10.3:6443 check fall 3 rise 2
+```
+- Restart haproxy service :
+```
+systemctl restart haproxy
+```
