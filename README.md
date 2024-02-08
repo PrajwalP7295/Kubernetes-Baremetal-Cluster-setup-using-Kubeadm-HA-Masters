@@ -270,7 +270,8 @@ systemctl restart haproxy
   ```
 
 - [Install __Container Runtime__ and configure __cgroup driver__]((https://kubernetes.io/docs/setup/production-environment/container-runtimes/)) :-
-  > - A container runtime is a software component responsible for executing and managing containers on a host system. __containerd, CRI-O, Docker Engine, Mirantis Container Runtime__ are the popular ones used with Kubernetes. The Container Runtime must be configured to load the CNI plugins required to implement the Kubernetes network model.
+  > - A container runtime is a software component responsible for executing and managing containers on a host system. The Container Runtime must be configured to load the CNI plugins required to implement the Kubernetes network model.
+  > - __containerd, CRI-O, Docker Engine, Mirantis Container Runtime__ are the popular ones used with Kubernetes. 
   > - Containerd is an open-source container runtime developed by the Docker. It is used to manage the lifecycle of containers on a host system and widely adopted in production environments for deploying and managing containerized applications.
   - Pre-requisites :
     - Configure __kernel modules__ : 
