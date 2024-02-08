@@ -421,24 +421,24 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
     ```
     sudo kubeadm init --control-plane-endpoint="192.168.10.7:6443" --upload-certs --apiserver-advertise-address=192.168.10.1 --pod-network-cidr=10.244.0.0/16
     ```
-  > - Note :- There various types of pod networks available for kubernetes, but here I have used Flannel pod network whose CIDR = 10.244.0.0/16
+  > - Note :- There various types of pod networks available for kubernetes, but here I have used __Flannel__ pod network whose CIDR = __10.244.0.0/16__
   - If you receive an error listed below execute the respective commands and again run the kubeadm init command.
-    - Port or firewall error :
+    - Port or __firewall__ error :
       ```
       systemctl stop firewalld
       systemctl disable firewalld
       ```
-    - Port in use error : 
+    - __Port__ in use error : 
       ```
       lsof -i :<port>
       sudo kill <PID>
       ```
-  - Output after successful initialization of the cluster control-plane : 
+  - __Output__ after successful initialization of the cluster control-plane : 
     <div align="center">
       <img src="./images/kubeadm_init.png" alt="Cluster_init" width="100%" height="100%">
     </div>
-
-  - The output will show some commands to be executed as a regular user : 
+  > - __IMPORTANT__ : As you can see in the above image, there are two join commands - one for control-plane nodes and the other for worker nodes. Copy these commands somewhere as you will use these commands to join the respective nodes to the cluster later on.  
+  - The output will show some commands to be executed as a __regular user__ : 
     ```
     mkdir -p $HOME/.kube
     sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
@@ -449,3 +449,27 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
     sudo -i
     export KUBECONFIG=/etc/kubernetes/admin.conf
     ```
+- To __enable__ pod network (flannel) on the cluster : 
+  ```
+  kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+  ```
+  > - If the command doesn't work check this link - ```https://github.com/flannel-io/flannel```; or search for flannel repo and copy link of kube-flannel.yaml; replace in the above command.
+
+  - __Restart__ kubelet : 
+    ```
+    systemctl restart kubelet
+    ```
+  - Check __status__ of kubelet for any errors : 
+    ```
+    systemctl status kubelet
+    ```
+- Check if the master node's status is __"Ready"__ : 
+  ```
+  kubectl get nodes 
+  ```
+  Output : 
+  ```
+  NAME            STATUS   ROLES           AGE     VERSION
+  k8s-master-1    Ready    control-plane   5d22h   v1.27.5
+  ```
+  
