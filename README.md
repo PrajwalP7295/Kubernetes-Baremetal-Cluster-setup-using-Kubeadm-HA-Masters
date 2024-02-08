@@ -324,7 +324,7 @@ systemctl restart haproxy
         wget https://link_to_cni_plugin_version.tgz
         ```
         For example, here I used "cni-plugins-linux-amd64-v1.4.0" :
-        
+
         ```wget https://github.com/containernetworking/plugins/releases/download/v1.4.0/cni-plugins-linux-amd64-v1.4.0.tgz```
         
       - Extract it under __/opt/cni/bin__:
@@ -339,33 +339,33 @@ systemctl restart haproxy
     > - There are two cgroup drivers available : ```1. cgroupfs``` ```2. systemd```
     > - __systemd__ cgroup driver is recommended for __kubeadm__ based setups instead of the __kubelet's default cgroupfs__ driver, because kubeadm manages the kubelet as a systemd service.
     - To use the systemd cgroup driver with runc, you need to make changes in the containerd __config__ file (/etc/containerd/config.toml) : 
-      - Generate a default containerd config file :
+      - __Generate__ a default containerd config file :
         ```
         containerd config default > /etc/containerd/config.toml
         ```
-      - Edit the config file : 
+      - __Edit__ the config file : 
         ```
         nano /etc/containerd/config.toml
         ```
-        - Search for the following properties in the file : 
+        - __Search__ for the following properties in the file : 
           ```
           [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc] 
           ...
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
           ```
-          - In this property, set : 
+          - In this property, __set__ : 
             ```
             SystemdCgroup = true
             ```
-        - To prevent inconsistent sandboximage warning, search below property : 
+        - To prevent inconsistent __sandboximage__ warning, search below property : 
           ```
           [plugins."io.containerd.grpc.v1.cri"]
           ```
-          - Set : 
+          - __Set__ : 
             ```
             sandbox_image = "registry.k8s.io/pause:3.9"
             ```
-    - Restart containerd service :
+    - __Restart__ containerd service :
       ```
       systemctl restart containerd
       ```
@@ -373,3 +373,79 @@ systemctl restart haproxy
   > - __kubeadm__ : the command to bootstrap the cluster.
   > - __kubelet__ : the component that runs on all of the machines in your cluster and does things like starting pods and containers.
   > - __kubectl__: the command line util to talk to your cluster.
+
+  - Create a __YUM repository configuration file__ for the Kubernetes packages : 
+    ```
+    cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+    [kubernetes]
+    name=Kubernetes
+    baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-\$basearch
+    enabled=1
+    gpgcheck=1
+    repo_gpgcheck=1
+    gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    exclude=kubelet kubeadm kubectl
+    EOF
+    ```
+  - __Update__ installed packages : 
+    ```
+    yum update 
+    ```
+  - Install __latest__ Kubernetes components version :
+    ```
+    yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+    ```
+    - To install __specific__ version of k8s components : 
+      ```
+      yum install -y kubelet-<maj>.<min> kubeadm-<maj>.<min> kubectl-<maj>.<min> --disableexcludes=kubernetes
+      ``` 
+      > - Where __maj__ = major version and __min__ = minor version
+      > - For example : 
+        ```
+        yum install -y kubelet-1.27.5 kubeadm-1.27.5 kubectl-1.27.5 --disableexcludes=kubernetes
+        ```
+  - __Enable__ and set kubectl to automatically __start__ at boot time :
+    ```
+    systemctl enable --now kubelet
+    ```
+
+## Initialize the Kubernetes Cluster
+
+Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with higher specs) and execute the below commands to initialize the cluster.
+
+- Initialize a Kubernetes __control plane__ on the master node, configure the control plane __endpoint__, upload certificates, set the API server advertise address, and specify the pod network CIDR for the cluster :
+  ```
+  sudo kubeadm init --control-plane-endpoint="<lb_ip>:6443" --upload-certs --apiserver-advertise-address=<main_master_ip> --pod-network-cidr=10.244.0.0/16
+  ```
+  - For example : 
+    ```
+    sudo kubeadm init --control-plane-endpoint="192.168.10.7:6443" --upload-certs --apiserver-advertise-address=192.168.10.1 --pod-network-cidr=10.244.0.0/16
+    ```
+  > - Note :- There various types of pod networks available for kubernetes, but here I have used Flannel pod network whose CIDR = 10.244.0.0/16
+  - If you receive an error listed below execute the respective commands and again run the kubeadm init command.
+    - Port or firewall error :
+      ```
+      systemctl stop firewalld
+      systemctl disable firewalld
+      ```
+    - Port in use error : 
+      ```
+      lsof -i :<port>
+      sudo kill <PID>
+      ```
+  - Output after successful initialization of the cluster control-plane : 
+    <div align="center">
+      <img src="./images/kubeadm_init.png" alt="Cluster_init" width="100%" height="100%">
+    </div>
+
+  - The output will show some commands to be executed as a regular user : 
+    ```
+    mkdir -p $HOME/.kube
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+    ```
+    Now switch to sudo user and set the env variable : 
+    ```
+    sudo -i
+    export KUBECONFIG=/etc/kubernetes/admin.conf
+    ```
