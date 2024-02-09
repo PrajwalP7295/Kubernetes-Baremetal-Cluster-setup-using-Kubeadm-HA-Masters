@@ -400,10 +400,7 @@ systemctl restart haproxy
       yum install -y kubelet-<maj>.<min> kubeadm-<maj>.<min> kubectl-<maj>.<min> --disableexcludes=kubernetes
       ``` 
       > - Where __maj__ = major version and __min__ = minor version
-      > - For example : 
-        ```
-        yum install -y kubelet-1.27.5 kubeadm-1.27.5 kubectl-1.27.5 --disableexcludes=kubernetes
-        ```
+      > - For example : ```yum install -y kubelet-1.27.5 kubeadm-1.27.5 kubectl-1.27.5 --disableexcludes=kubernetes```
   - __Enable__ and set kubectl to automatically __start__ at boot time :
     ```
     systemctl enable --now kubelet
@@ -417,10 +414,8 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
   ```
   sudo kubeadm init --control-plane-endpoint="<lb_ip>:6443" --upload-certs --apiserver-advertise-address=<main_master_ip> --pod-network-cidr=10.244.0.0/16
   ```
-  - For example : 
-    ```
-    sudo kubeadm init --control-plane-endpoint="192.168.10.7:6443" --upload-certs --apiserver-advertise-address=192.168.10.1 --pod-network-cidr=10.244.0.0/16
-    ```
+  where __<lb_ip>__ = load balancer node ip and __<main_master_ip>__ = main master node ip.
+
   > - Note :- There various types of pod networks available for kubernetes, but here I have used __Flannel__ pod network whose CIDR = __10.244.0.0/16__
   - If you receive an error listed below execute the respective commands and again run the kubeadm init command.
     - Port or __firewall__ error :
@@ -472,4 +467,112 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
   NAME            STATUS   ROLES           AGE     VERSION
   k8s-master-1    Ready    control-plane   5d22h   v1.27.5
   ```
-  
+
+## Join remaining nodes to the cluster (2 Masters & 3  Workers)
+
+- Use the "__kubeadm join__ ..." commands you copied earlier from the output of "__kubeadm init__ ..." command.
+> - IMPORTANT : You also need to pass "__--apiserver-advertise-address__" to the join command when you join the other master nodes.
+
+- On __k8s-master-2__ and __k8s-master-3__ nodes : 
+  ```
+  sudo kubeadm join <lb_ip>:6443 --token sample_token --discovery-token-ca-cert-hash sha256:sample_hash --control-plane --certificate-key sample_cert_key --apiserver-advertise-address <master_node_ip>
+  ```
+  where __<lb_ip>__ = load balancer ip and replace __<master_node_ip>__ = respective master node ip on which the command is being executed.
+
+- On worker nodes (__k8s-worker-1, k8s-worker-2, k8s-worker-3__): 
+  ```
+  sudo kubeadm join <lb_ip>:6443 --token sample_token --discovery-token-ca-cert-hash sha256:sample_hash
+  ```
+  where __<lb_ip>__ = load balancer node ip
+
+- The tokens and certificate keys of the join command __expire__ after 2 hours. Rendering the join commands you copied earlier invalid. 
+- To create a new join command (worker) using new token, run the below commands on Main Master :
+  ```
+  kubeadm token create --print-join-command
+  ```
+  This can directly be used to join the worker nodes. But to join the master nodes you need to add the certificate key in this command.
+  - Output : 
+    ```
+    kubeadm join 192.168.10.7:6443 --token 2050ew.1nyb3p4lybbdyory --discovery-token-ca-cert-hash sha256:fcc6b2521ca2abec1522ba529a76f2cb24eea78e9511aee88f4237945c766a33
+    ```
+- Create new certificate key to join master nodes :
+  ```
+  kubeadm init phase upload-certs --upload-certs
+  ```
+  - Output :
+    ```
+    [upload-certs] Storing the certificates in Secret "kubeadm-certs" in the "kube-system" Namespace
+    [upload-certs] Using certificate key:
+    3f4d27d1eefadbdf736b52053c76d60893dc42a1ba7c06d06df0eb47a88418b1
+    ```
+- __Combine__ the outputs of the above commands and pass the "__--apiserver-advertise-address__" to create a new join command for the master nodes :
+  ```
+  kubeadm join 192.168.10.7:6443 --token 2050ew.1nyb3p4lybbdyory --discovery-token-ca-cert-hash sha256:fcc6b2521ca2abec1522ba529a76f2cb24eea78e9511aee88f4237945c766a33 --control-plane --certificate-key 3f4d27d1eefadbdf736b52053c76d60893dc42a1ba7c06d06df0eb47a88418b1 --apiserver-advertise-address <node_ip>
+
+## Verifying the cluster
+
+- Get all nodes present in the cluster : 
+  ```
+  kubectl get nodes 
+  ```
+  - Output :
+    ```
+    NAME           STATUS   ROLES           AGE     VERSION
+    k8s-master-1   Ready    control-plane   6d9h    v1.27.5
+    k8s-master-2   Ready    control-plane   6d8h    v1.27.5
+    k8s-master-3   Ready    control-plane   6d8h    v1.27.5
+    k8s-worker-1   Ready    <none>          2d22h   v1.27.5
+    k8s-worker-2   Ready    <none>          2d22h   v1.27.5
+    k8s-worker-3   Ready    <none>          2d20h   v1.27.5
+    ```
+  - If you receive an __error__ "couldn't get current server API group list" :
+    ```
+    kubectl get nodes --insecure-skip-tls-verify --username=<your-vm-username> --password=<your-vm-password>
+    ```
+- Get cluster information :
+  ```
+  kubectl cluster-info
+  ```
+  - Output :
+    ```
+    Kubernetes control plane is running at https://192.168.10.7:6443
+    CoreDNS is running at https://192.168.10.7:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+    ```
+
+- Retrieve the health and status of the various control plane components :
+  ```
+  kubectl get cs 
+  ```
+  - Output : 
+    ```
+    Warning: v1 ComponentStatus is deprecated in v1.19+
+    NAME                 STATUS    MESSAGE   ERROR
+    scheduler            Healthy   ok
+    controller-manager   Healthy   ok
+    etcd-0               Healthy
+    ```
+
+- Specify roles for worker nodes :
+
+  As you can see in the output of "__get nodes__" commands, the worker nodes are not labelled. To label them with roles :
+  ```
+  kubectl label node <node-name> node-role.kubernetes.io/worker=worker
+  ```
+  - Output : 
+    ```
+    NAME           STATUS   ROLES           AGE     VERSION
+    k8s-master-1   Ready    control-plane   6d9h    v1.27.5
+    k8s-master-2   Ready    control-plane   6d8h    v1.27.5
+    k8s-master-3   Ready    control-plane   6d8h    v1.27.5
+    k8s-worker-1   Ready    worker          2d22h   v1.27.5
+    k8s-worker-2   Ready    worker          2d22h   v1.27.5
+    k8s-worker-3   Ready    worker          2d20h   v1.27.5
+    ```
+
+## Congratulations
+
+You have set up a Baremetal HA Multi-Master Kubernetes Cluster using kubeadm.
+
+Now you can deploy a [sample deployment]() on the cluster to test its working.
+
+Have Fun!!
