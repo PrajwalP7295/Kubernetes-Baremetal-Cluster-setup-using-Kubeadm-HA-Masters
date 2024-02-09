@@ -16,7 +16,7 @@ This documentation guides you in setting up a cluster with __3 Master__ nodes, _
 |Worker|k8s-worker-2.example.com|192.168.10.5|CentOS Linux 7|8G|2|
 |Worker|k8s-worker-3.example.com|192.168.10.6|CentOS Linux 7|8G|2|
 
-> * Perform all the commands as __root__ user unless otherwise specified
+> * Perform all the commands as __"root"__ user unless otherwise specified
 
 ## Pre-requisites
 For a baremetal kubernetes cluster :
@@ -79,7 +79,7 @@ For a baremetal kubernetes cluster :
     |UDP|-|8472|Cluster-wide network communication - Flannel VXLAN|-|
 
   - __Load Balancer__ : 
-    - The same ports used by control planes.
+    - Uses the same ports as control planes.
 
   - __Worker Node(s)__ :
     |Protocol|Direction|Port Range|Purpose|Used By|
@@ -110,7 +110,7 @@ For a baremetal kubernetes cluster :
   nc 127.0.0.1 6443
   ```
 
-  - The above mentioned ports can be opened specifically if the machines are in a public VPC to keep the cluster secure. If the nodes/machines are operating in a private VPC then you can shutdown the firewall service instead of opening each port.
+  - You can only open the above mentioned ports specifically if the machines are in a __public VPC__ to keep the cluster __secure__. If the nodes/machines are operating in a __private VPC__ then you can shutdown the firewall service instead of opening each port.
     - Check firewall __status__ : 
     ```
     firewall-cmd --state
@@ -119,7 +119,7 @@ For a baremetal kubernetes cluster :
     ```
     systemctl stop firewalld
     ```
-    - Turn off firewall service across reboots : 
+    - __Turn off__ firewall service across reboots : 
     ```
     systemctl disable firewalld
     ```
@@ -127,14 +127,14 @@ For a baremetal kubernetes cluster :
   ```
   hostnamectl set-hostname '<node_hostname>'
   ```
-  For example : ```hostnamectl set-hostname '<k8s-master-1>'```
+  For example : ```hostnamectl set-hostname 'k8s-master-1'```
 
   Start new shell session / reflect changes :
   ```
   bash
   ``` 
 - Configure __/etc/hosts__ file :
-  > - To manage local DNS resolution and allow the nodes in the cluster to communicate with each other using hostnames.
+  > To manage local DNS resolution and allow the nodes in the cluster to communicate with each other using hostnames.
   ```
   nano /etc/hosts
   ```
@@ -178,7 +178,7 @@ backend kubernetes-backend
     server master_node2_hostname master_node2_ip:6443 check fall 3 rise 2
     server master_node3_hostname master_node3_ip:6443 check fall 3 rise 2
 ```
-  > For example : 
+  For example : 
   ```
   frontend kubernetes-frontend
     bind 192.168.10.7:6443
@@ -202,7 +202,8 @@ systemctl restart haproxy
 ## Run the below commands on all the k8s nodes (3 Masters and 3 Workers)
 
 - Disable __Swap__ memory :- 
-  - You MUST disable swap in order for the kubelet to work properly.
+  
+  You MUST disable swap in order for the kubelet to work properly.
   - __Disable__ swapping temporarily : 
   ```
   swapoff -a
@@ -258,7 +259,7 @@ systemctl restart haproxy
       ```
       ls -l /var/run/docker.sock
       ```
-      > It should show the owner as __'root'__ and the group as __'docker'__. (If the group is root, then we need to execute the below command):
+      > It should show the owner as __'root'__ and the group as __'docker'__. (If the group is 'root', then we need to execute the below command):
       - __Change__ group ownership :
       ```
       sudo chown root:docker /var/run/docker.sock
@@ -292,7 +293,7 @@ systemctl restart haproxy
       lsmod | grep overlay
       ```
     - Configure __sysctl parameters__ :
-      > - Essential for networking and IP forwarding configurations
+      > Essential for networking and IP forwarding configurations
       ```
       cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
       net.bridge.bridge-nf-call-iptables  = 1
@@ -338,7 +339,7 @@ systemctl restart haproxy
     > - It's critical that the kubelet and the container runtime use the __same cgroup driver__ and are __configured__ the same.
     > - There are two cgroup drivers available : ```1. cgroupfs``` ```2. systemd```
     > - __systemd__ cgroup driver is recommended for __kubeadm__ based setups instead of the __kubelet's default cgroupfs__ driver, because kubeadm manages the kubelet as a systemd service.
-    - To use the systemd cgroup driver with runc, you need to make changes in the containerd __config__ file (/etc/containerd/config.toml) : 
+    - To use the systemd cgroup driver with runc, you need to make changes in the containerd __config__ file (/etc/containerd/config.toml): 
       - __Generate__ a default containerd config file :
         ```
         containerd config default > /etc/containerd/config.toml
@@ -399,8 +400,8 @@ systemctl restart haproxy
       ```
       yum install -y kubelet-<maj>.<min> kubeadm-<maj>.<min> kubectl-<maj>.<min> --disableexcludes=kubernetes
       ``` 
-      > - Where __maj__ = major version and __min__ = minor version
-      > - For example : ```yum install -y kubelet-1.27.5 kubeadm-1.27.5 kubectl-1.27.5 --disableexcludes=kubernetes```
+      Where __maj__ = major version and __min__ = minor version
+      For example : ```yum install -y kubelet-1.27.5 kubeadm-1.27.5 kubectl-1.27.5 --disableexcludes=kubernetes```
   - __Enable__ and set kubectl to automatically __start__ at boot time :
     ```
     systemctl enable --now kubelet
@@ -416,7 +417,7 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
   ```
   where __<lb_ip>__ = load balancer node ip and __<main_master_ip>__ = main master node ip.
 
-  > - Note :- There various types of pod networks available for kubernetes, but here I have used __Flannel__ pod network whose CIDR = __10.244.0.0/16__
+  > - Note :- There are various types of pod networks available for kubernetes, but here I have used __Flannel__ pod network whose CIDR = __10.244.0.0/16__
   - If you receive an error listed below execute the respective commands and again run the kubeadm init command.
     - Port or __firewall__ error :
       ```
@@ -429,9 +430,11 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
       sudo kill <PID>
       ```
   - __Output__ after successful initialization of the cluster control-plane : 
+
     <div align="center">
       <img src="./images/kubeadm_init.png" alt="Cluster_init" width="100%" height="100%">
     </div>
+
   > - __IMPORTANT__ : As you can see in the above image, there are two join commands - one for control-plane nodes and the other for worker nodes. Copy these commands somewhere as you will use these commands to join the respective nodes to the cluster later on.  
   - The output will show some commands to be executed as a __regular user__ : 
     ```
@@ -448,7 +451,7 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
   ```
   kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
   ```
-  > - If the command doesn't work check this link - ```https://github.com/flannel-io/flannel```; or search for flannel repo and copy link of kube-flannel.yaml; replace in the above command.
+  > If the command doesn't work check this link - ```https://github.com/flannel-io/flannel```; or search for flannel repo and copy link of kube-flannel.yaml; replace in the above command.
 
   - __Restart__ kubelet : 
     ```
@@ -465,13 +468,13 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
   Output : 
   ```
   NAME            STATUS   ROLES           AGE     VERSION
-  k8s-master-1    Ready    control-plane   5d22h   v1.27.5
+  k8s-master-1    Ready    control-plane   1d22h   v1.27.5
   ```
 
 ## Join remaining nodes to the cluster (2 Masters & 3  Workers)
 
 - Use the "__kubeadm join__ ..." commands you copied earlier from the output of "__kubeadm init__ ..." command.
-> - IMPORTANT : You also need to pass "__--apiserver-advertise-address__" to the join command when you join the other master nodes.
+> IMPORTANT : You also need to pass "__--apiserver-advertise-address__" to the join command when you join the other master nodes.
 
 - On __k8s-master-2__ and __k8s-master-3__ nodes : 
   ```
@@ -486,7 +489,7 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
   where __<lb_ip>__ = load balancer node ip
 
 - The tokens and certificate keys of the join command __expire__ after 2 hours. Rendering the join commands you copied earlier invalid. 
-- To create a new join command (worker) using new token, run the below commands on Main Master :
+- To create a __new join command__ (worker) using new token, run the below commands on Main Master :
   ```
   kubeadm token create --print-join-command
   ```
@@ -495,7 +498,7 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
     ```
     kubeadm join 192.168.10.7:6443 --token 2050ew.1nyb3p4lybbdyory --discovery-token-ca-cert-hash sha256:fcc6b2521ca2abec1522ba529a76f2cb24eea78e9511aee88f4237945c766a33
     ```
-- Create new certificate key to join master nodes :
+- Create new __certificate key__ to join master nodes :
   ```
   kubeadm init phase upload-certs --upload-certs
   ```
@@ -518,12 +521,12 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
   - Output :
     ```
     NAME           STATUS   ROLES           AGE     VERSION
-    k8s-master-1   Ready    control-plane   6d9h    v1.27.5
-    k8s-master-2   Ready    control-plane   6d8h    v1.27.5
-    k8s-master-3   Ready    control-plane   6d8h    v1.27.5
-    k8s-worker-1   Ready    <none>          2d22h   v1.27.5
-    k8s-worker-2   Ready    <none>          2d22h   v1.27.5
-    k8s-worker-3   Ready    <none>          2d20h   v1.27.5
+    k8s-master-1   Ready    control-plane   2d9h    v1.27.5
+    k8s-master-2   Ready    control-plane   2d8h    v1.27.5
+    k8s-master-3   Ready    control-plane   2d8h    v1.27.5
+    k8s-worker-1   Ready    <none>          1d22h   v1.27.5
+    k8s-worker-2   Ready    <none>          1d22h   v1.27.5
+    k8s-worker-3   Ready    <none>          1d20h   v1.27.5
     ```
   - If you receive an __error__ "couldn't get current server API group list" :
     ```
@@ -561,12 +564,12 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
   - Output : 
     ```
     NAME           STATUS   ROLES           AGE     VERSION
-    k8s-master-1   Ready    control-plane   6d9h    v1.27.5
-    k8s-master-2   Ready    control-plane   6d8h    v1.27.5
-    k8s-master-3   Ready    control-plane   6d8h    v1.27.5
-    k8s-worker-1   Ready    worker          2d22h   v1.27.5
-    k8s-worker-2   Ready    worker          2d22h   v1.27.5
-    k8s-worker-3   Ready    worker          2d20h   v1.27.5
+    k8s-master-1   Ready    control-plane   2d9h    v1.27.5
+    k8s-master-2   Ready    control-plane   2d8h    v1.27.5
+    k8s-master-3   Ready    control-plane   2d8h    v1.27.5
+    k8s-worker-1   Ready    worker          1d22h   v1.27.5
+    k8s-worker-2   Ready    worker          1d22h   v1.27.5
+    k8s-worker-3   Ready    worker          1d20h   v1.27.5
     ```
 
 ## __Congratulations__
