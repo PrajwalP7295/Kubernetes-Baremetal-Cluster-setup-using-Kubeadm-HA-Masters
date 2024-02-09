@@ -81,21 +81,11 @@ It has two features that work together to provide this service: ```1. address al
 
 #### Create IP address pool 
 
-- Create a file named "ipaddresspool.yaml" :
+- Create a file named "[ipaddresspool.yaml](https://github.com/PrajwalP7295/baremetal-kubernetes-ha-multi-master-cluster/blob/main/metal-lb/ipaddresspool.yaml)" :
   ```
   nano ipaddresspool.yaml
   ```
-  - Add below lines into the file : 
-    ```
-    apiVersion: metallb.io/v1beta1
-    kind: IPAddressPool
-    metadata:
-      name: default-pool
-      namespace: metallb-system
-    spec:
-      addresses:
-      - 192.168.10.*-192.168.10.*
-    ```
+  
     In above file, as per my use case I have used IP range : 192.168.10.*-192.168.10.* since my cluster nodes are a part of this CIDR.
 
     You can change this range accordingly.
@@ -107,21 +97,11 @@ It has two features that work together to provide this service: ```1. address al
 
 #### Create L2Advertisement
 
-- Create a file named "l2advertisement.yaml" :
+- Create a file named "[l2advertisement.yaml](https://github.com/PrajwalP7295/baremetal-kubernetes-ha-multi-master-cluster/blob/main/metal-lb/l2advertisement.yaml)" :
   ```
   nano l2advertisement.yaml
   ```
-  - Add below lines into the file : 
-    ```
-    apiVersion: metallb.io/v1beta1
-    kind: L2Advertisement
-    metadata:
-      name: default-l2
-      namespace: metallb-system
-    spec:
-      ipAddressPools:
-      - default-pool
-    ```
+  
 - Apply the file : 
   ```
   kubectl -n metallb-system apply -f l2advertisement.yaml
