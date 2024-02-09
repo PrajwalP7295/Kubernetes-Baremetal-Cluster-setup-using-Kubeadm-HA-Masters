@@ -339,7 +339,7 @@ systemctl restart haproxy
     > - It's critical that the kubelet and the container runtime use the __same cgroup driver__ and are __configured__ the same.
     > - There are two cgroup drivers available : ```1. cgroupfs``` ```2. systemd```
     > - __systemd__ cgroup driver is recommended for __kubeadm__ based setups instead of the __kubelet's default cgroupfs__ driver, because kubeadm manages the kubelet as a systemd service.
-    - To use the systemd cgroup driver with runc, you need to make changes in the containerd __config__ file (/etc/containerd/config.toml): 
+    - To use the systemd cgroup driver with runc, you need to make changes in the containerd __config__ file (/etc/containerd/config.toml) : 
       - __Generate__ a default containerd config file :
         ```
         containerd config default > /etc/containerd/config.toml
@@ -556,6 +556,10 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
     controller-manager   Healthy   ok
     etcd-0               Healthy
     ```
+
+<div align="center">
+  <img src="./images/cluster_info.png" alt="Cluster_info" width="100%" height="100%">
+</div>
 
 - Specify __roles__ for worker nodes :
 
