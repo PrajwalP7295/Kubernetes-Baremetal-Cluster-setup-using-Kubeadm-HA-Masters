@@ -511,7 +511,7 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
 
 ## Verifying the cluster
 
-- Get all nodes present in the cluster : 
+- Get __all nodes__ present in the cluster : 
   ```
   kubectl get nodes 
   ```
@@ -529,7 +529,7 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
     ```
     kubectl get nodes --insecure-skip-tls-verify --username=<your-vm-username> --password=<your-vm-password>
     ```
-- Get cluster information :
+- Get __cluster information__ :
   ```
   kubectl cluster-info
   ```
@@ -539,7 +539,7 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
     CoreDNS is running at https://192.168.10.7:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
     ```
 
-- Retrieve the health and status of the various control plane components :
+- Retrieve the __health__ and __status__ of the various control plane components :
   ```
   kubectl get cs 
   ```
@@ -552,7 +552,7 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
     etcd-0               Healthy
     ```
 
-- Specify roles for worker nodes :
+- Specify __roles__ for worker nodes :
 
   As you can see in the output of "__get nodes__" commands, the worker nodes are not labelled. To label them with roles :
   ```
@@ -569,10 +569,12 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
     k8s-worker-3   Ready    worker          2d20h   v1.27.5
     ```
 
-## Congratulations
+## __Congratulations__
 
 You have set up a Baremetal HA Multi-Master Kubernetes Cluster using kubeadm.
 
-Now you can deploy a [sample deployment]() on the cluster to test its working.
+Now you can deploy a [sample deployment](https://github.com/PrajwalP7295/baremetal-kubernetes-ha-multi-master/tree/main/sample-deployment) on the cluster to test its working.
+
+Furthermore, you can integrate [MetalLB](https://github.com/PrajwalP7295/baremetal-kubernetes-ha-multi-master/tree/main/metal-lb) and [Ingress-Controller](https://github.com/PrajwalP7295/baremetal-kubernetes-ha-multi-master/tree/main/ingress-nginx-controller) on this cluster for enhanced load balancing and routing capabilities for the services you create to expose to the clients.
 
 Have Fun!!
