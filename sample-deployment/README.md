@@ -53,7 +53,7 @@ kubectl get svc
 #### Output : 
 
 <div align="center">
-  <img src="./images/sample_deploy_output.png" alt="Cluster_info" width="100%" height="100%">
+  <img src="../images/sample_deploy_output.png" alt="sample-deploy-output" width="100%" height="100%">
 </div>
 
 ## __Congratulations__
