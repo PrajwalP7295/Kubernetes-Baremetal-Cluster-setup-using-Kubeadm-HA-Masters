@@ -401,6 +401,7 @@ systemctl restart haproxy
       yum install -y kubelet-<maj>.<min> kubeadm-<maj>.<min> kubectl-<maj>.<min> --disableexcludes=kubernetes
       ``` 
       Where __maj__ = major version and __min__ = minor version
+
       For example : ```yum install -y kubelet-1.27.5 kubeadm-1.27.5 kubectl-1.27.5 --disableexcludes=kubernetes```
   - __Enable__ and set kubectl to automatically __start__ at boot time :
     ```
@@ -434,6 +435,7 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
     <div align="center">
       <img src="./images/kubeadm_init.png" alt="Cluster_init" width="100%" height="100%">
     </div>
+
 
   > - __IMPORTANT__ : As you can see in the above image, there are two join commands - one for control-plane nodes and the other for worker nodes. Copy these commands somewhere as you will use these commands to join the respective nodes to the cluster later on.  
   - The output will show some commands to be executed as a __regular user__ : 
