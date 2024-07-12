@@ -57,21 +57,21 @@ hostnamectl set-hostname '<node_hostname>'
 
 __Example__ : `hostnamectl set-hostname 'k8s-master-1'`
 
-    To reflect changes start a new shell session / log out and log back in :
+To reflect changes start a new shell session / log out and log back in :
 
 ```
 bash
 ``` 
 
-#### Configure __/etc/hosts__ file :
+#### Configure __/etc/hosts__ file :-
   
-    To manage local DNS resolution and allow the nodes in the cluster to communicate with each other using hostnames.
+To manage local DNS resolution and allow the nodes in the cluster to communicate with each other using hostnames.
 
 ```
 nano /etc/hosts
 ```
 
-    Make changes as per your __IPs__ and __hostnames__, and add the below lines in the __hosts__ file of each node : 
+Make changes as per your __IPs__ and __hostnames__, and add the below lines in the __hosts__ file of each node : 
 
 ```
 192.168.10.1 k8s-master-1
@@ -220,7 +220,7 @@ yum install -y haproxy
 nano /etc/haproxy/haproxy.cfg
 ```
 
-    Append below lines to __haproxy.cfg__ file -
+Append below lines to __haproxy.cfg__ file -
 
 ```
 frontend kubernetes-frontend
@@ -237,7 +237,7 @@ backend kubernetes-backend
     server master_node2_hostname master_node2_ip:6443 check fall 3 rise 2
     server master_node3_hostname master_node3_ip:6443 check fall 3 rise 2
 ```
-    __Example__ :
+__Example__ :
 
 ```
 frontend kubernetes-frontend
@@ -309,7 +309,7 @@ You MUST disable swap in order for the kubelet to work properly.
 
 - [Docker installation on CentOS](https://docs.docker.com/engine/install/centos/).
     
-    - If you get an __error__ during ```yum install docker ...```, then execute below commands and continue installation :
+    - If you get an __error__ during ```yum install docker ...```, then execute below commands and continue installation process :
        
         ```
         yum remove docker-1.13.1-209.git7d71120.el7.centos.x86_64
@@ -368,7 +368,9 @@ You MUST disable swap in order for the kubelet to work properly.
 
 #### [Install and configure __Container Runtime__]((https://kubernetes.io/docs/setup/production-environment/container-runtimes/)) :-
   
-A container runtime is a software component responsible for executing and managing containers on a host system. The Container Runtime must be configured to load the CNI plugins required to implement the Kubernetes network model.
+A container runtime is a software component responsible for executing and managing containers on a host system. 
+
+The Container Runtime must be configured to load the CNI plugins required to implement the Kubernetes network model.
 
 - Pre-requisites :
     
@@ -506,13 +508,13 @@ A container runtime is a software component responsible for executing and managi
       systemctl restart containerd
       ```
 
-#### Install __kubeadm, kubelet, kubectl___ :-
+#### Install __kubeadm, kubelet, kubectl__ :-
 
-__kubeadm__ : the command to bootstrap the cluster.
+__*kubeadm*__ : the command to bootstrap the cluster.
 
-__kubelet__ : the component that runs on all of the machines in your cluster and does things like starting pods and containers.
+__*kubelet*__ : the component that runs on all of the machines in your cluster and does things like starting pods and containers.
 
-__kubectl__: the command line util to talk to your cluster.
+__*kubectl*__: the command line util to talk to your cluster.
 
 - Create a __YUM repository configuration file__ for the Kubernetes packages : 
 
@@ -563,7 +565,7 @@ __kubectl__: the command line util to talk to your cluster.
 
 ## Initialize the Kubernetes Cluster
 
-Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with higher specs) and execute the below commands to initialize the cluster.
+Select any one machine (__k8s-master-1__) as the __Main Master__ node (one with higher specs) and execute the below commands to initialize the cluster.
 
 - Initialize a Kubernetes __control plane__ on the master node, configure the control plane __endpoint__, upload certificates, set the API server advertise address, and specify the pod network CIDR for the cluster :
 
@@ -594,10 +596,6 @@ Select any 1 machine (__k8s-master-1__) as the __Main Master__ node (one with hi
 - __Output__ after successful initialization of the cluster control-plane : 
 
     ![Kubeadm cluster init success](media/kubeadm_init.png)
-
-    <!-- <div align="center">
-      <img src="./media/kubeadm_init.png" alt="Cluster_init" width="100%" height="100%">
-    </div> -->
 
   > __IMPORTANT__ : As you can see in the above image, there are __two join__ commands - one for __control-plane__ nodes and the other for __worker__ nodes. __Copy__ these commands somewhere as you will use these commands to join the respective nodes to the cluster later on.  
 
@@ -669,7 +667,7 @@ __Example__ :
 sudo kubeadm join <lb_ip>:6443 --token sample_token --discovery-token-ca-cert-hash sha256:sample_hash --control-plane --certificate-key sample_cert_key --apiserver-advertise-address <master_node_ip>
 ```
 
-    where __<lb_ip>__ = load balancer ip and replace __<master_node_ip>__ = respective master node ip on which the command is being executed.
+where __<lb_ip>__ = load balancer ip and replace __<master_node_ip>__ = respective master node ip on which the command is being executed.
 
 #### Join worker nodes (__k8s-worker-1, k8s-worker-2, k8s-worker-3__): 
 
@@ -681,11 +679,11 @@ __Example__ :
 sudo kubeadm join <lb_ip>:6443 --token sample_token --discovery-token-ca-cert-hash sha256:sample_hash
 ```
 
-    where __<lb_ip>__ = load balancer node ip
+where __<lb_ip>__ = load balancer node ip
 
 > __NOTE__: The tokens and certificate keys of the join command __expire__ after 2 hours. Rendering the join commands you copied earlier invalid. 
 
-#### __New join command__ (worker nodes)
+#### __New join command__ (worker nodes):
 
 Run the below commands on Main Master :
 
@@ -699,7 +697,7 @@ __Output__ :
 kubeadm join 192.168.10.7:6443 --token 2050ew.1nyb3p4lybbdyory --discovery-token-ca-cert-hash sha256:fcc6b2521ca2abec1522ba529a76f2cb24eea78e9511aee88f4237945c766a33
 ```
 
-    This command can directly be used to join the worker nodes. But to join the master nodes you need to add the certificate key in this command.
+This command can directly be used to join the worker nodes. But to join the master nodes you need to add the certificate key in this command.
   
 #### Create new __certificate key__ to join master nodes :
 
@@ -723,7 +721,7 @@ Combine the new worker join command and the __certificate key__. Also, pass the 
 sudo kubeadm join 192.168.10.7:6443 --token 2050ew.1nyb3p4lybbdyory --discovery-token-ca-cert-hash sha256:fcc6b2521ca2abec1522ba529a76f2cb24eea78e9511aee88f4237945c766a33 --control-plane --certificate-key 3f4d27d1eefadbdf736b52053c76d60893dc42a1ba7c06d06df0eb47a88418b1 --apiserver-advertise-address <node_ip>
 ```
 
-    You can use the above command to join Master nodes to the cluster even if the initial join commands get expired.
+You can use the above command to join Master nodes to the cluster even if the initial join commands get expired.
 
 ## Verify the cluster
 
@@ -750,6 +748,8 @@ __Output__ :
     ```
     kubectl get nodes --insecure-skip-tls-verify --username=<your-vm-username> --password=<your-vm-password>
     ```
+
+    > Replace the `username` and `password` as per respective server. 
 
 #### Get __cluster information__ :
   
@@ -781,11 +781,8 @@ etcd-0               Healthy
 ```
 
 ![Cluster Info](media/cluster_info.png)
-<!-- <div align="center">
-  <img src="./images/cluster_info.png" alt="Cluster_info" width="100%" height="100%">
-</div> -->
 
-## Specify __roles__ for worker nodes :
+## Specify __roles__ for worker nodes
 
 As you can see in the output of "__kubectl get nodes__" commands, the worker nodes are not labelled. To label them with roles :
 
